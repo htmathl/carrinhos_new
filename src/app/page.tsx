@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, ShoppingCart, List, Trash2 } from "lucide-react"
+import { Plus, ShoppingCart, List, Trash2, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -13,12 +13,14 @@ import CommandBar from "./components/CommandBar"
 import AnimatedDialog from "./components/AnimatedDialog"
 import { AnimatedList } from "./components/AnimatedCard"
 import { useAppStore } from "./store/useAppStoreDB"
+import { useAuth } from "@/app/hooks/useAuthCustom"
 import { Item, ShoppingList } from "./types"
 
 // import { createClient } from '@/utils/supabase/client'
 
 export default function Home() {
   // const supabase = createClient()
+  const { signOut } = useAuth()
 
   const {
     lists,
@@ -38,6 +40,7 @@ export default function Home() {
   } = useAppStore()
   const [showNewList, setShowNewList] = useState(false)
   const [showItems, setShowItems] = useState(false)
+  // const [showDatabase, setShowDatabase] = useState(false)
   const [newListName, setNewListName] = useState("")
   const [newListDescription, setNewListDescription] = useState("")
 
@@ -224,17 +227,38 @@ export default function Home() {
             <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
               <ShoppingCart className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl font-bold">Smart Cart</h1>
+            <h1 className="text-xl font-bold">Carrinhos</h1>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowItems(true)}
-            className="bg-gray-900 hover:bg-gray-800 text-white border-0"
-          >
-            <List className="w-4 h-4 mr-2" />
-            Itens ({items.length})
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowItems(true)}
+              className="bg-gray-900 hover:bg-gray-800 text-white border-0"
+            >
+              <List className="w-4 h-4 mr-2" />
+              Itens ({items.length})
+            </Button>
+            
+            {/* User Menu */}
+            <div className="flex items-center gap-2 ml-2">
+              {/* <div className="flex items-center gap-2 px-3 py-1 bg-gray-900 rounded-lg">
+                <User className="w-4 h-4 text-purple-400" />
+                <span className="text-sm text-gray-300">
+                  {user?.name || user?.email?.split('@')[0] || 'Usuário'}
+                </span>
+              </div> */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="bg-gray-900 hover:bg-red-900 text-gray-300 hover:text-red-400 border-0"
+                title="Sair"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 

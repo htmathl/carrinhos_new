@@ -21,6 +21,7 @@ interface DatabaseItem {
   name: string
   category: string
   unit: "unidade" | "kg" | "litro"
+  user_id: string
   createdAt: string
 }
 
@@ -28,6 +29,7 @@ interface DatabaseList {
   id: string
   name: string
   description: string
+  user_id: string
   createdAt: string
 }
 
@@ -123,11 +125,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       set({ loading: true, error: null })
 
+      // Verificar se o usuário está autenticado
+      const savedUser = localStorage.getItem('user')
+      if (!savedUser) {
+        throw new Error('Usuário não autenticado')
+      }
+      const user = JSON.parse(savedUser)
+
       const newItem = {
         id: crypto.randomUUID(),
         name,
         category,
         unit,
+        user_id: user.id,
         createdAt: new Date().toISOString()
       }
 
@@ -237,10 +247,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       set({ loading: true, error: null })
 
+      // Verificar se o usuário está autenticado
+      const savedUser = localStorage.getItem('user')
+      if (!savedUser) {
+        throw new Error('Usuário não autenticado')
+      }
+      const user = JSON.parse(savedUser)
+
       const newList = {
         id: crypto.randomUUID(),
         name,
         description,
+        user_id: user.id,
         createdAt: new Date().toISOString()
       }
 
