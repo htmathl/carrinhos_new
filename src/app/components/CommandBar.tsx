@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Command, Send, Sparkles, CheckCircle, XCircle, AlertCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { useAppStore } from "../store/useAppStore"
+import { useAppStore } from "../store/useAppStoreDB"
 import { Item, ListItem, ShoppingList } from "../types"
 
 interface CommandResult {

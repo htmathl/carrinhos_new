@@ -103,7 +103,7 @@ export const useAppStore = create<AppState>()(
             quantity,
             price,
             completed: false,
-            addedAt: new Date(),
+            createdAt: new Date(),
             unit: undefined
         }
         set((state) => ({ listItems: [...state.listItems, newListItem] }))

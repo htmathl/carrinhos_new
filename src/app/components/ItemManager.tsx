@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import AnimatedSelect from "./AnimatedSelect"
 import AnimatedDialog from "./AnimatedDialog"
 // import AnimatedCard from "./AnimatedCard"
-import { useAppStore } from "../store/useAppStore"
+import { useAppStore } from "../store/useAppStoreDB"
 import { Item } from "../types"
 
 export default function ItemManager() {
@@ -140,9 +140,9 @@ export default function ItemManager() {
       item.category.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const handleCreateItem = () => {
+  const handleCreateItem = async () => {
     if (newItem.name.trim() && newItem.category.trim()) {
-      addItem(newItem.name.trim(), newItem.category.trim(), newItem.unit)
+      await addItem(newItem.name.trim(), newItem.category.trim(), newItem.unit)
       setNewItem({ name: "", category: "", unit: "unidade" })
       setShowNewItem(false)
     }
@@ -156,9 +156,9 @@ export default function ItemManager() {
     setShowEditItem(true)
   }
 
-  const handleUpdateItem = () => {
+  const handleUpdateItem = async () => {
     if (editingItem && editItemName.trim() && editItemCategory.trim()) {
-      updateItem(editingItem.id, {
+      await updateItem(editingItem.id, {
         name: editItemName.trim(),
         category: editItemCategory.trim(),
         unit: editItemUnit,
@@ -181,9 +181,9 @@ export default function ItemManager() {
     setShowDeleteConfirm(true)
   }
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (itemToDelete) {
-      deleteItem(itemToDelete.id)
+      await deleteItem(itemToDelete.id)
       setShowDeleteConfirm(false)
       setItemToDelete(null)
     }

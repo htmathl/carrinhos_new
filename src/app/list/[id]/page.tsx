@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import AnimatedSelect from "../../components/AnimatedSelect"
 import AnimatedDialog from "../../components/AnimatedDialog"
 // import AnimatedListItem from "../../components/AnimatedListItem"
-import { useAppStore } from "../../store/useAppStore"
+import { useAppStore } from "../../store/useAppStoreDB"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { Item, ListItem } from "@/app/types"
@@ -111,22 +111,24 @@ export default function ListPage() {
     }
   }
 
-  const handleCreateAndAddItem = () => {
+  const handleCreateAndAddItem = async () => {
     if (newItemName.trim() && newItemCategory.trim() && quantity && price) {
       // Criar o item e receber o item criado diretamente
-      const createdItem = addItem(newItemName.trim(), newItemCategory.trim(), newItemUnit)
+      const createdItem = await addItem(newItemName.trim(), newItemCategory.trim(), newItemUnit)
 
-      // Adicionar imediatamente à lista usando o item retornado
-      addItemToList(listId, createdItem.id, Number.parseFloat(quantity), Number.parseFloat(price))
+      if (createdItem) {
+        // Adicionar imediatamente à lista usando o item retornado
+        await addItemToList(listId, createdItem.id, Number.parseFloat(quantity), Number.parseFloat(price))
 
-      // Reset form
-      setNewItemName("")
-      setNewItemCategory("")
-      setNewItemUnit("unidade")
-      setQuantity("1")
-      setPrice("")
-      setShowCreateItem(false)
-      setShowAddItem(false)
+        // Reset form
+        setNewItemName("")
+        setNewItemCategory("")
+        setNewItemUnit("unidade")
+        setQuantity("1")
+        setPrice("")
+        setShowCreateItem(false)
+        setShowAddItem(false)
+      }
     }
   }
 

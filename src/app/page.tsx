@@ -12,11 +12,28 @@ import ItemManager from "./components/ItemManager"
 import CommandBar from "./components/CommandBar"
 import AnimatedDialog from "./components/AnimatedDialog"
 import { AnimatedList } from "./components/AnimatedCard"
-import { useAppStore } from "./store/useAppStore"
+import { useAppStore } from "./store/useAppStoreDB"
 import { Item, ShoppingList } from "./types"
 
+// import { createClient } from '@/utils/supabase/client'
+
 export default function Home() {
-  const { lists, items, addList, updateItem, updateList, deleteItem, deleteList } = useAppStore()
+  // const supabase = createClient()
+
+  const {
+    lists,
+    items,
+    loading,
+    error,
+    addList,
+    updateItem,
+    updateList,
+    deleteItem,
+    deleteList,
+    loadItems,
+    loadLists,
+    loadListItems
+  } = useAppStore()
   const [showNewList, setShowNewList] = useState(false)
   const [showItems, setShowItems] = useState(false)
   const [newListName, setNewListName] = useState("")
@@ -42,9 +59,13 @@ export default function Home() {
   const [showDeleteListConfirm, setShowDeleteListConfirm] = useState(false)
   const [listToDelete, setListToDelete] = useState<ShoppingList | null>(null)
 
-  const handleCreateList = () => {
+  // // Estados para teste de conexão
+  // const [connectionStatus, setConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle')
+  // const [connectionMessage, setConnectionMessage] = useState('')
+
+  const handleCreateList = async () => {
     if (newListName.trim()) {
-      addList(newListName.trim(), newListDescription.trim())
+      await addList(newListName.trim(), newListDescription.trim())
       setNewListName("")
       setNewListDescription("")
       setShowNewList(false)
@@ -59,9 +80,9 @@ export default function Home() {
     setShowEditItem(true)
   }
 
-  const handleUpdateItem = () => {
+  const handleUpdateItem = async () => {
     if (editingItem && editItemName.trim() && editItemCategory.trim()) {
-      updateItem(editingItem.id, {
+      await updateItem(editingItem.id, {
         name: editItemName.trim(),
         category: editItemCategory.trim(),
         unit: editItemUnit,
@@ -78,9 +99,9 @@ export default function Home() {
     setShowEditList(true)
   }
 
-  const handleUpdateList = () => {
+  const handleUpdateList = async () => {
     if (editingList && editListName.trim()) {
-      updateList(editingList.id, {
+      await updateList(editingList.id, {
         name: editListName.trim(),
         description: editListDescription.trim(),
       })
@@ -95,9 +116,9 @@ export default function Home() {
     setShowDeleteItemConfirm(true)
   }
 
-  const handleConfirmDeleteItem = () => {
+  const handleConfirmDeleteItem = async () => {
     if (itemToDelete) {
-      deleteItem(itemToDelete.id)
+      await deleteItem(itemToDelete.id)
       setShowDeleteItemConfirm(false)
       setItemToDelete(null)
     }
@@ -108,9 +129,9 @@ export default function Home() {
     setShowDeleteListConfirm(true)
   }
 
-  const handleConfirmDeleteList = () => {
+  const handleConfirmDeleteList = async () => {
     if (listToDelete) {
-      deleteList(listToDelete.id)
+      await deleteList(listToDelete.id)
       setShowDeleteListConfirm(false)
       setListToDelete(null)
     }
@@ -122,6 +143,46 @@ export default function Home() {
     const linkedLists = lists.filter((list) => linkedListIds.includes(list.id))
     return { count: linkedLists.length, lists: linkedLists }
   }
+
+  // // Função para testar consulta na tabela item
+  // const testItemQuery = async () => {
+  //   try {
+  //     console.log('Testando consulta na tabela item...')
+
+  //     // Consulta simples: buscar todos os itens
+  //     const { data, error } = await supabase
+  //       .from('item')
+  //       .select('*')
+
+  //     if (error) {
+  //       console.error('Erro na consulta:', error)
+  //       alert(`Erro: ${error.message}`)
+  //     } else {
+  //       console.log('Dados encontrados:', data)
+  //       alert(`Sucesso! Encontrados ${data?.length || 0} itens na tabela.`)
+  //     }
+  //   } catch (err) {
+  //     console.error('Erro inesperado:', err)
+  //     alert('Erro inesperado na consulta')
+  //   }
+  // }
+
+  // Carregar dados iniciais
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        await Promise.all([
+          loadItems(),
+          loadLists(),
+          loadListItems()
+        ])
+      } catch (err) {
+        console.error('Erro ao carregar dados iniciais:', err)
+      }
+    }
+
+    loadInitialData()
+  }, [loadItems, loadLists, loadListItems])
 
   // No useEffect que escuta comandos, adicionar os casos de delete:
   // Escutar comandos de edição e exclusão
@@ -170,6 +231,21 @@ export default function Home() {
       {/* Command Bar */}
       <CommandBar />
 
+      {/* Loading Indicator */}
+      {loading && (
+        <div className="bg-blue-900/20 border border-blue-800 mx-4 p-3 rounded-lg flex items-center gap-2 text-blue-300">
+          <div className="w-4 h-4 animate-spin rounded-full border-2 border-blue-400 border-t-transparent" />
+          <span className="text-sm">Carregando dados...</span>
+        </div>
+      )}
+
+      {/* Error Indicator */}
+      {error && (
+        <div className="bg-red-900/20 border border-red-800 mx-4 p-3 rounded-lg flex items-center gap-2 text-red-300">
+          <span className="text-sm">❌ {error}</span>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="p-4 space-y-6">
         {/* Stats */}
@@ -183,6 +259,17 @@ export default function Home() {
             <div className="text-sm text-gray-400">Itens</div>
           </div>
         </div>
+
+        {/* Seção de Teste de Consulta
+        <div className="bg-gray-950 rounded-xl p-4 border border-gray-800 mb-6">
+          <h3 className="text-lg font-semibold mb-3">Teste de Consulta</h3>
+          <Button 
+            onClick={testItemQuery}
+            className="bg-blue-600 hover:bg-blue-700 text-white border-0"
+          >
+            Consultar Tabela 'item'
+          </Button>
+        </div> */}
 
         {/* Lists Section */}
         <div className="space-y-4">
@@ -214,7 +301,7 @@ export default function Home() {
               </Button>
             </div>
           ) : (
-            <AnimatedList 
+            <AnimatedList
               className="space-y-3"
               itemClassName="w-full"
             >

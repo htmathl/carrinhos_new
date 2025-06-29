@@ -23,6 +23,6 @@ export interface Item {
     quantity: number
     price: number
     completed: boolean
-    addedAt: Date
+    createdAt: Date
   }
   
