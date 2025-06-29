@@ -10,7 +10,7 @@ const withPWA = require('next-pwa')({
       urlPattern: /^https?.*/,
       handler: 'NetworkFirst',
       options: {
-        cacheName: 'smart-cart-cache',
+        cacheName: 'carrinhos-cache',
         expiration: {
           maxEntries: 200,
         },

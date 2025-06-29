@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { ShoppingCart, Eye, EyeOff, Loader2 } from 'lucide-react'
+import AuthGuard from '@/app/components/AuthGuard'
 // import Link from 'next/link'
 
 export default function LoginPage() {
@@ -43,7 +44,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+    <AuthGuard requireAuth={false}>
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         {/* Header */}
         <div className="text-center">
@@ -134,5 +136,6 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+    </AuthGuard>
   )
 }

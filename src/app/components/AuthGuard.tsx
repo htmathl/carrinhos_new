@@ -5,16 +5,25 @@ import { useRouter, usePathname } from "next/navigation"
 import { useEffect } from "react"
 import { Loader2, ShoppingCart } from "lucide-react"
 
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
+interface AuthGuardProps {
+  children: React.ReactNode
+  requireAuth?: boolean
+}
+
+export default function AuthGuard({ children, requireAuth = true }: AuthGuardProps) {
   const { user, loading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
-    if (!loading && !user && !pathname.startsWith('/auth')) {
-      router.push('/auth/login')
+    if (!loading) {
+      if (requireAuth && !user && !pathname.startsWith('/auth')) {
+        router.push('/auth/login')
+      } else if (!requireAuth && user) {
+        router.push('/')
+      }
     }
-  }, [user, loading, router, pathname])
+  }, [user, loading, router, pathname, requireAuth])
 
   if (loading) {
     return (
@@ -35,8 +44,13 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Se não está logado e não está em página de auth, não renderizar
-  if (!user && !pathname.startsWith('/auth')) {
+  // Se não está logado e precisa de auth (e não está em página de auth), não renderizar
+  if (requireAuth && !user && !pathname.startsWith('/auth')) {
+    return null
+  }
+
+  // Se está logado e não precisa de auth (página de login), não renderizar
+  if (!requireAuth && user) {
     return null
   }
 
