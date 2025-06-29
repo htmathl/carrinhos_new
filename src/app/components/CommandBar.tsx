@@ -2,12 +2,13 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Command, Send, Sparkles, CheckCircle, XCircle, AlertCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useAppStore } from "../store/useAppStore"
+import { Item, ListItem, ShoppingList } from "../types"
 
 interface CommandResult {
   success: boolean
@@ -15,7 +16,7 @@ interface CommandResult {
   type: "success" | "error" | "info"
   action?: {
     type: "edit-item" | "edit-list" | "delete-item" | "delete-list"
-    data: any
+    data: Item | ShoppingList | ListItem
   }
 }
 
@@ -27,7 +28,7 @@ export default function CommandBar() {
   const { processCommand } = useAppStore()
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const commandExamples = [
+  const commandExamples = useMemo(() => [
     "add arroz na mercado",
     "novo leite categoria laticínios",
     "add lista compras",
@@ -37,7 +38,7 @@ export default function CommandBar() {
     "edit leite",
     "add feijão na feira",
     "novo açúcar categoria mercearia kg",
-  ]
+  ], [])
 
   useEffect(() => {
     if (command.length > 2) {
@@ -46,7 +47,7 @@ export default function CommandBar() {
     } else {
       setSuggestions([])
     }
-  }, [command])
+  }, [command, commandExamples])
 
   useEffect(() => {
     if (result) {
@@ -79,7 +80,7 @@ export default function CommandBar() {
     } catch (error) {
       setResult({
         success: false,
-        message: "Erro ao processar comando",
+        message: "Erro ao processar comando" + (error instanceof Error ? `: ${error.message}` : ""),
         type: "error",
       })
     } finally {

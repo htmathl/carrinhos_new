@@ -10,7 +10,7 @@ interface CommandResult {
   type: "success" | "error" | "info"
   action?: {
     type: "edit-item" | "edit-list" | "delete-item" | "delete-list"
-    data: any
+    data: Item | ShoppingList | ListItem
   }
 }
 
@@ -141,10 +141,10 @@ export const useAppStore = create<AppState>()(
           addList,
           addItemToList,
           getListItems,
-          deleteItem,
-          deleteList,
-          updateItem,
-          updateList,
+          // deleteItem,
+          // deleteList,
+          // updateItem,
+          // updateList,
         } = get()
         const cmd = command.toLowerCase().trim()
 

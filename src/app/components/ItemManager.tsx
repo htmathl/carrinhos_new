@@ -11,8 +11,9 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import AnimatedSelect from "./AnimatedSelect"
 import AnimatedDialog from "./AnimatedDialog"
-import AnimatedCard from "./AnimatedCard"
+// import AnimatedCard from "./AnimatedCard"
 import { useAppStore } from "../store/useAppStore"
+import { Item } from "../types"
 
 export default function ItemManager() {
   const { items, addItem, deleteItem, updateItem } = useAppStore()
@@ -25,13 +26,13 @@ export default function ItemManager() {
   })
 
   const [showEditItem, setShowEditItem] = useState(false)
-  const [editingItem, setEditingItem] = useState<any>(null)
+  const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [editItemName, setEditItemName] = useState("")
   const [editItemCategory, setEditItemCategory] = useState("")
   const [editItemUnit, setEditItemUnit] = useState<"unidade" | "kg" | "litro">("unidade")
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [itemToDelete, setItemToDelete] = useState<any>(null)
+  const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
 
   // Variantes de animação
   const containerVariants = {
@@ -147,7 +148,7 @@ export default function ItemManager() {
     }
   }
 
-  const handleEditItem = (item: any) => {
+  const handleEditItem = (item: Item) => {
     setEditingItem(item)
     setEditItemName(item.name)
     setEditItemCategory(item.category)
@@ -175,7 +176,7 @@ export default function ItemManager() {
     return { count: linkedLists.length, lists: linkedLists }
   }
 
-  const handleDeleteClick = (item: any) => {
+  const handleDeleteClick = (item: Item) => {
     setItemToDelete(item)
     setShowDeleteConfirm(true)
   }
@@ -396,7 +397,7 @@ export default function ItemManager() {
                   <span className="font-medium text-red-300">Tem certeza?</span>
                 </div>
                 <p className="text-sm text-gray-300 mb-4">
-                  Você está prestes a excluir o item <strong>"{itemToDelete.name}"</strong>.
+                  Você está prestes a excluir o item <strong>&quot;{itemToDelete.name}&quot;</strong>.
                 </p>
 
                 {(() => {

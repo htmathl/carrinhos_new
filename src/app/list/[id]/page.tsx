@@ -9,13 +9,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import AnimatedSelect from "../../components/AnimatedSelect"
 import AnimatedDialog from "../../components/AnimatedDialog"
-import AnimatedListItem from "../../components/AnimatedListItem"
+// import AnimatedListItem from "../../components/AnimatedListItem"
 import { useAppStore } from "../../store/useAppStore"
 import Link from "next/link"
 import { useParams } from "next/navigation"
+import { Item, ListItem } from "@/app/types"
 
 export default function ListPage() {
   const params = useParams()
@@ -28,9 +28,9 @@ export default function ListPage() {
     removeItemFromList,
     toggleItemCompleted,
     addItem,
-    updateItem,
+    // updateItem,
     updateListItem,
-    updateList,
+    // updateList,
   } = useAppStore()
 
   const [showAddItem, setShowAddItem] = useState(false)
@@ -49,7 +49,7 @@ export default function ListPage() {
 
   // Estados para edição de item na lista
   const [showEditListItem, setShowEditListItem] = useState(false)
-  const [editingListItem, setEditingListItem] = useState<any>(null)
+  const [editingListItem, setEditingListItem] = useState<ListItem | null>(null)
   const [editListItemQuantity, setEditListItemQuantity] = useState("")
   const [editListItemPrice, setEditListItemPrice] = useState("")
 
@@ -97,7 +97,7 @@ export default function ListPage() {
       groups[category].push({ listItem, item })
       return groups
     },
-    {} as Record<string, Array<{ listItem: any; item: any }>>,
+    {} as Record<string, Array<{ listItem: ListItem; item: Item }>>,
   )
 
   const handleAddItem = () => {
@@ -130,7 +130,7 @@ export default function ListPage() {
     }
   }
 
-  const handleEditListItem = (listItem: any, item: any) => {
+  const handleEditListItem = (listItem: ListItem) => {
     setEditingListItem(listItem)
     setEditListItemQuantity(listItem.quantity.toString())
     setEditListItemPrice(listItem.price.toString())
@@ -261,7 +261,7 @@ export default function ListPage() {
                       {existingItem && itemAlreadyInList && (
                         <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4 text-center">
                           <div className="text-yellow-400 mb-2">⚠️</div>
-                          <p className="text-sm text-yellow-300 mb-2">"{existingItem.name}" já está nesta lista!</p>
+                          <p className="text-sm text-yellow-300 mb-2">&quot;{existingItem.name}&quot; já está nesta lista!</p>
                           <p className="text-xs text-yellow-400">Verifique os itens abaixo ou busque outro nome.</p>
                         </div>
                       )}
@@ -315,7 +315,7 @@ export default function ListPage() {
                       {!existingItem && availableItems.length === 0 && (
                         <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center">
                           <Sparkles className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-300 mb-3">Item "{searchTerm}" não encontrado</p>
+                          <p className="text-sm text-gray-300 mb-3">Item &quot;{searchTerm}&quot; não encontrado</p>
                           <Button
                             onClick={() => {
                               setNewItemName(searchTerm)
@@ -324,7 +324,7 @@ export default function ListPage() {
                             className="bg-purple-600 hover:bg-purple-700 border-0"
                           >
                             <Plus className="w-4 h-4 mr-1" />
-                            Criar "{searchTerm}"
+                            Criar &quot;{searchTerm}&quot;
                           </Button>
                         </div>
                       )}
@@ -554,7 +554,7 @@ export default function ListPage() {
                               size="sm"
                               className="text-white hover:bg-red-700 border-0 p-2"
                               onClick={() => {
-                                handleEditListItem(listItem, item)
+                                handleEditListItem(listItem)
                                 setSwipedItemId(null)
                               }}
                             >
@@ -672,7 +672,7 @@ export default function ListPage() {
                                   className="text-gray-400 hover:text-white hover:bg-gray-800 border-0 p-2"
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    handleEditListItem(listItem, item)
+                                    handleEditListItem(listItem)
                                   }}
                                 >
                                   <Edit className="w-4 h-4" />

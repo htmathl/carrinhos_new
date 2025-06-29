@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { Plus, ShoppingCart, List, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Dialog } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -14,6 +13,7 @@ import CommandBar from "./components/CommandBar"
 import AnimatedDialog from "./components/AnimatedDialog"
 import { AnimatedList } from "./components/AnimatedCard"
 import { useAppStore } from "./store/useAppStore"
+import { Item, ShoppingList } from "./types"
 
 export default function Home() {
   const { lists, items, addList, updateItem, updateList, deleteItem, deleteList } = useAppStore()
@@ -24,23 +24,23 @@ export default function Home() {
 
   // Estados para edição via comando
   const [showEditItem, setShowEditItem] = useState(false)
-  const [editingItem, setEditingItem] = useState<any>(null)
+  const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [editItemName, setEditItemName] = useState("")
   const [editItemCategory, setEditItemCategory] = useState("")
   const [editItemUnit, setEditItemUnit] = useState<"unidade" | "kg" | "litro">("unidade")
 
   const [showEditList, setShowEditList] = useState(false)
-  const [editingList, setEditingList] = useState<any>(null)
+  const [editingList, setEditingList] = useState<ShoppingList | null>(null)
   const [editListName, setEditListName] = useState("")
   const [editListDescription, setEditListDescription] = useState("")
 
   // Adicionar estados para confirmação de exclusão via comando:
   // Estados para exclusão via comando
   const [showDeleteItemConfirm, setShowDeleteItemConfirm] = useState(false)
-  const [itemToDelete, setItemToDelete] = useState<any>(null)
+  const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
 
   const [showDeleteListConfirm, setShowDeleteListConfirm] = useState(false)
-  const [listToDelete, setListToDelete] = useState<any>(null)
+  const [listToDelete, setListToDelete] = useState<ShoppingList | null>(null)
 
   const handleCreateList = () => {
     if (newListName.trim()) {
@@ -51,7 +51,7 @@ export default function Home() {
     }
   }
 
-  const handleEditItem = (item: any) => {
+  const handleEditItem = (item: Item) => {
     setEditingItem(item)
     setEditItemName(item.name)
     setEditItemCategory(item.category)
@@ -71,7 +71,7 @@ export default function Home() {
     }
   }
 
-  const handleEditList = (list: any) => {
+  const handleEditList = (list: ShoppingList) => {
     setEditingList(list)
     setEditListName(list.name)
     setEditListDescription(list.description)
@@ -90,7 +90,7 @@ export default function Home() {
   }
 
   // Adicionar funções para lidar com exclusões:
-  const handleDeleteItem = (item: any) => {
+  const handleDeleteItem = (item: Item) => {
     setItemToDelete(item)
     setShowDeleteItemConfirm(true)
   }
@@ -103,7 +103,7 @@ export default function Home() {
     }
   }
 
-  const handleDeleteList = (list: any) => {
+  const handleDeleteList = (list: ShoppingList) => {
     setListToDelete(list)
     setShowDeleteListConfirm(true)
   }
@@ -126,8 +126,9 @@ export default function Home() {
   // No useEffect que escuta comandos, adicionar os casos de delete:
   // Escutar comandos de edição e exclusão
   useEffect(() => {
-    const handleCommandAction = (event: CustomEvent) => {
-      const { action } = event.detail
+    const handleCommandAction = (event: Event) => {
+      const customEvent = event as CustomEvent
+      const { action } = customEvent.detail
       if (action?.type === "edit-item") {
         handleEditItem(action.data)
       } else if (action?.type === "edit-list") {
@@ -139,8 +140,8 @@ export default function Home() {
       }
     }
 
-    window.addEventListener("command-action" as any, handleCommandAction)
-    return () => window.removeEventListener("command-action" as any, handleCommandAction)
+    window.addEventListener("command-action", handleCommandAction)
+    return () => window.removeEventListener("command-action", handleCommandAction)
   }, [])
 
   return (
@@ -205,7 +206,7 @@ export default function Home() {
               <h3 className="text-lg font-semibold text-gray-300 mb-2">Nenhuma lista ainda</h3>
               <p className="text-gray-500 mb-4">Crie sua primeira lista ou use comandos</p>
               <div className="text-sm text-gray-600 bg-gray-900 rounded-lg p-3 mb-4">
-                💡 Experimente: <span className="text-purple-400 font-mono">"add lista mercado"</span>
+                💡 Experimente: <span className="text-purple-400 font-mono">&quot;add lista mercado&quot;</span>
               </div>
               <Button onClick={() => setShowNewList(true)} className="bg-purple-600 hover:bg-purple-700 border-0">
                 <Plus className="w-4 h-4 mr-2" />
@@ -396,7 +397,7 @@ export default function Home() {
                   <span className="font-medium text-red-300">Tem certeza?</span>
                 </div>
                 <p className="text-sm text-gray-300 mb-3">
-                  Você está prestes a excluir o item <strong>"{itemToDelete.name}"</strong>.
+                  Você está prestes a excluir o item <strong>&quot;{itemToDelete.name}&quot;</strong>.
                 </p>
 
                 {(() => {
@@ -454,7 +455,7 @@ export default function Home() {
                   <span className="font-medium text-red-300">Tem certeza?</span>
                 </div>
                 <p className="text-sm text-gray-300 mb-3">
-                  Você está prestes a excluir a lista <strong>"{listToDelete.name}"</strong>.
+                  Você está prestes a excluir a lista <strong>&quot;{listToDelete.name}&quot;</strong>.
                 </p>
 
                 {(() => {

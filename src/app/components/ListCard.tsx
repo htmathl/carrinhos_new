@@ -11,7 +11,6 @@ import { useAppStore } from "../store/useAppStore"
 import type { ShoppingList } from "../types"
 import Link from "next/link"
 import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
@@ -152,7 +151,7 @@ export default function ListCard({ list }: ListCardProps) {
               <span className="font-medium text-red-300">Tem certeza?</span>
             </div>
             <p className="text-sm text-gray-300 mb-3">
-              Você está prestes a excluir a lista <strong>"{list.name}"</strong>.
+              Você está prestes a excluir a lista <strong>&quot;{list.name}&quot;</strong>.
             </p>
 
             {listItems.length > 0 && (
