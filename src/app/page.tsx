@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, ShoppingCart, List, Trash2, User, LogOut } from "lucide-react"
+import { Plus, ShoppingCart, List, Trash2, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -22,7 +22,7 @@ import { Item, ShoppingList } from "./types"
 
 export default function Home() {
   // const supabase = createClient()
-  const { user, signOut } = useAuth()
+  const { signOut } = useAuth()
 
   const {
     lists,
@@ -244,12 +244,12 @@ export default function Home() {
             
             {/* User Menu */}
             <div className="flex items-center gap-2 ml-2">
-              <div className="flex items-center gap-2 px-3 py-1 bg-gray-900 rounded-lg">
+              {/* <div className="flex items-center gap-2 px-3 py-1 bg-gray-900 rounded-lg">
                 <User className="w-4 h-4 text-purple-400" />
                 <span className="text-sm text-gray-300">
                   {user?.name || user?.email?.split('@')[0] || 'Usuário'}
                 </span>
-              </div>
+              </div> */}
               <Button
                 variant="ghost"
                 size="sm"
