@@ -32,7 +32,9 @@ export default function Home() {
     deleteList,
     loadItems,
     loadLists,
-    loadListItems
+    loadListItems,
+    subscribeToRealtime,
+    unsubscribeFromRealtime
   } = useAppStore()
   const [showNewList, setShowNewList] = useState(false)
   const [showItems, setShowItems] = useState(false)
@@ -167,7 +169,7 @@ export default function Home() {
   //   }
   // }
 
-  // Carregar dados iniciais
+  // Carregar dados iniciais e ativar realtime
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -176,13 +178,21 @@ export default function Home() {
           loadLists(),
           loadListItems()
         ])
+        
+        // Ativar subscriptions de realtime após carregar os dados
+        subscribeToRealtime()
       } catch (err) {
         console.error('Erro ao carregar dados iniciais:', err)
       }
     }
 
     loadInitialData()
-  }, [loadItems, loadLists, loadListItems])
+
+    // Cleanup: desativar realtime quando o componente for desmontado
+    return () => {
+      unsubscribeFromRealtime()
+    }
+  }, [loadItems, loadLists, loadListItems, subscribeToRealtime, unsubscribeFromRealtime])
 
   // No useEffect que escuta comandos, adicionar os casos de delete:
   // Escutar comandos de edição e exclusão
@@ -259,6 +269,26 @@ export default function Home() {
             <div className="text-sm text-gray-400">Itens</div>
           </div>
         </div>
+
+        {/* Realtime Status
+        <div className="bg-gray-950 rounded-xl p-4 border border-gray-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-green-400">🟢 Realtime Ativo</h3>
+              <p className="text-xs text-gray-400">Mudanças no banco são sincronizadas automaticamente</p>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => {
+                unsubscribeFromRealtime()
+                setTimeout(() => subscribeToRealtime(), 1000)
+              }}
+              className="bg-green-600 hover:bg-green-700 text-white border-0"
+            >
+              Reconectar
+            </Button>
+          </div>
+        </div> */}
 
         {/* Seção de Teste de Consulta
         <div className="bg-gray-950 rounded-xl p-4 border border-gray-800 mb-6">

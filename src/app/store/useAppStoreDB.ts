@@ -3,6 +3,7 @@
 import { create } from "zustand"
 import { createClient } from "@/utils/supabase/client"
 import type { Item, ShoppingList, ListItem } from "../types"
+import type { RealtimeChannel, RealtimePostgresChangesPayload } from "@supabase/supabase-js"
 
 interface CommandResult {
   success: boolean
@@ -12,6 +13,32 @@ interface CommandResult {
     type: "edit-item" | "edit-list" | "delete-item" | "delete-list"
     data: Item | ShoppingList | ListItem
   }
+}
+
+// Tipos para os dados do banco
+interface DatabaseItem {
+  id: string
+  name: string
+  category: string
+  unit: "unidade" | "kg" | "litro"
+  createdAt: string
+}
+
+interface DatabaseList {
+  id: string
+  name: string
+  description: string
+  createdAt: string
+}
+
+interface DatabaseListItem {
+  id: string
+  list_id: string
+  item_id: string
+  quantity: number
+  price: number
+  completed: boolean
+  createdAt: string
 }
 
 interface AppState {
@@ -44,6 +71,11 @@ interface AppState {
   // Smart command processing
   processCommand: (command: string) => Promise<CommandResult>
 
+  // Realtime subscriptions
+  subscribeToRealtime: () => void
+  unsubscribeFromRealtime: () => void
+  subscriptions: RealtimeChannel[]
+
   // Utility actions
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
@@ -57,6 +89,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   listItems: [],
   loading: false,
   error: null,
+  subscriptions: [],
 
   setLoading: (loading: boolean) => set({ loading }),
   setError: (error: string | null) => set({ error }),
@@ -429,7 +462,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       addList,
       addItemToList,
       getListItems,
+      loadItems,
+      loadLists,
     } = get()
+    
+    // Recarregar dados atuais do BD antes de processar
+    await Promise.all([loadItems(), loadLists()])
+    
     const cmd = command.toLowerCase().trim()
 
     // Simular processamento
@@ -713,5 +752,152 @@ export const useAppStore = create<AppState>((set, get) => ({
         type: "error",
       }
     }
+  },
+
+  // ===== REALTIME SUBSCRIPTIONS =====
+  subscribeToRealtime: () => {
+    const { subscriptions } = get()
+    
+    // Unsubscribe from existing subscriptions
+    subscriptions.forEach((subscription: RealtimeChannel) => {
+      void supabase.removeChannel(subscription)
+    })
+
+    // Create a single channel for all table changes
+    const channel = supabase
+      .channel('database-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'item'
+        },
+        (payload: RealtimePostgresChangesPayload<DatabaseItem>) => {
+          console.log('Item change:', payload)
+          
+          if (payload.eventType === 'INSERT' && payload.new) {
+            const newItem = {
+              ...payload.new,
+              createdAt: new Date(payload.new.createdAt)
+            }
+            set((state) => ({
+              items: [newItem, ...state.items.filter(item => item.id !== newItem.id)]
+            }))
+          } else if (payload.eventType === 'UPDATE' && payload.new) {
+            const updatedItem = {
+              ...payload.new,
+              createdAt: new Date(payload.new.createdAt)
+            }
+            set((state) => ({
+              items: state.items.map((item) =>
+                item.id === payload.new?.id ? updatedItem : item
+              )
+            }))
+          } else if (payload.eventType === 'DELETE' && payload.old) {
+            set((state) => ({
+              items: state.items.filter((item) => item.id !== payload.old?.id),
+              listItems: state.listItems.filter((listItem) => listItem.itemId !== payload.old?.id)
+            }))
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shopping_list'
+        },
+        (payload: RealtimePostgresChangesPayload<DatabaseList>) => {
+          console.log('List change:', payload)
+          
+          if (payload.eventType === 'INSERT' && payload.new) {
+            const newList = {
+              ...payload.new,
+              createdAt: new Date(payload.new.createdAt)
+            }
+            set((state) => ({
+              lists: [newList, ...state.lists.filter(list => list.id !== newList.id)]
+            }))
+          } else if (payload.eventType === 'UPDATE' && payload.new) {
+            const updatedList = {
+              ...payload.new,
+              createdAt: new Date(payload.new.createdAt)
+            }
+            set((state) => ({
+              lists: state.lists.map((list) =>
+                list.id === payload.new?.id ? updatedList : list
+              )
+            }))
+          } else if (payload.eventType === 'DELETE' && payload.old) {
+            set((state) => ({
+              lists: state.lists.filter((list) => list.id !== payload.old?.id),
+              listItems: state.listItems.filter((listItem) => listItem.listId !== payload.old?.id)
+            }))
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'list_item'
+        },
+        (payload: RealtimePostgresChangesPayload<DatabaseListItem>) => {
+          console.log('List item change:', payload)
+          
+          if (payload.eventType === 'INSERT' && payload.new) {
+            const newListItem: ListItem = {
+              id: payload.new.id,
+              listId: payload.new.list_id,
+              itemId: payload.new.item_id,
+              quantity: payload.new.quantity,
+              price: payload.new.price,
+              completed: payload.new.completed,
+              createdAt: new Date(payload.new.createdAt),
+              unit: ''
+            }
+            set((state) => ({
+              listItems: [newListItem, ...state.listItems.filter(item => item.id !== newListItem.id)]
+            }))
+          } else if (payload.eventType === 'UPDATE' && payload.new) {
+            const updatedListItem: Partial<ListItem> = {
+              id: payload.new.id,
+              listId: payload.new.list_id,
+              itemId: payload.new.item_id,
+              quantity: payload.new.quantity,
+              price: payload.new.price,
+              completed: payload.new.completed,
+              createdAt: new Date(payload.new.createdAt)
+            }
+            set((state) => ({
+              listItems: state.listItems.map((listItem) =>
+                listItem.id === payload.new?.id ? { ...listItem, ...updatedListItem } : listItem
+              )
+            }))
+          } else if (payload.eventType === 'DELETE' && payload.old) {
+            set((state) => ({
+              listItems: state.listItems.filter((listItem) => listItem.id !== payload.old?.id)
+            }))
+          }
+        }
+      )
+      .subscribe()
+
+    // Store the subscription
+    set({ subscriptions: [channel] })
+
+    console.log('Realtime subscriptions ativadas!')
+  },
+
+  unsubscribeFromRealtime: () => {
+    const { subscriptions } = get()
+    subscriptions.forEach((subscription: RealtimeChannel) => {
+      void supabase.removeChannel(subscription)
+    })
+    set({ subscriptions: [] })
+    console.log('Realtime subscriptions desativadas!')
   }
 }))
