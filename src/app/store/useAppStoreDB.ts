@@ -33,8 +33,8 @@ interface DatabaseList {
 
 interface DatabaseListItem {
   id: string
-  list_id: string
-  item_id: string
+  listId: string
+  itemId: string
   quantity: number
   price: number
   completed: boolean
@@ -188,7 +188,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       await supabase
         .from('list_item')
         .delete()
-        .eq('item_id', id)
+        .eq('itemId', id)
 
       // Depois remove o item
       const { error } = await supabase
@@ -298,7 +298,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       await supabase
         .from('list_item')
         .delete()
-        .eq('list_id', id)
+        .eq('listId', id)
 
       // Depois remove a lista
       const { error } = await supabase
@@ -333,8 +333,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       const listItems = data?.map(item => ({
         id: item.id,
-        listId: item.list_id,
-        itemId: item.item_id,
+        listId: item.listId,
+        itemId: item.itemId,
         quantity: item.quantity,
         price: item.price,
         completed: item.completed,
@@ -355,8 +355,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       const newListItem = {
         id: crypto.randomUUID(),
-        list_id: listId,
-        item_id: itemId,
+        listId: listId,
+        itemId: itemId,
         quantity,
         price,
         completed: false,
@@ -373,8 +373,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       const listItemWithDate: ListItem = {
         id: data.id,
-        listId: data.list_id,
-        itemId: data.item_id,
+        listId: data.listId,
+        itemId: data.itemId,
         quantity: data.quantity,
         price: data.price,
         completed: data.completed,
@@ -851,8 +851,8 @@ export const useAppStore = create<AppState>((set, get) => ({
           if (payload.eventType === 'INSERT' && payload.new) {
             const newListItem: ListItem = {
               id: payload.new.id,
-              listId: payload.new.list_id,
-              itemId: payload.new.item_id,
+              listId: payload.new.listId,
+              itemId: payload.new.itemId,
               quantity: payload.new.quantity,
               price: payload.new.price,
               completed: payload.new.completed,
@@ -865,8 +865,8 @@ export const useAppStore = create<AppState>((set, get) => ({
           } else if (payload.eventType === 'UPDATE' && payload.new) {
             const updatedListItem: Partial<ListItem> = {
               id: payload.new.id,
-              listId: payload.new.list_id,
-              itemId: payload.new.item_id,
+              listId: payload.new.listId,
+              itemId: payload.new.itemId,
               quantity: payload.new.quantity,
               price: payload.new.price,
               completed: payload.new.completed,
