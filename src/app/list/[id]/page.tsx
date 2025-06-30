@@ -61,6 +61,10 @@ export default function ListPage() {
   const [editListItemQuantity, setEditListItemQuantity] = useState("")
   const [editListItemPrice, setEditListItemPrice] = useState("")
 
+  // Estados para confirmação de exclusão
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<{ listItem: ListItem; item: Item } | null>(null)
+
   // Detectar se é desktop
   useEffect(() => {
     const checkIsDesktop = () => {
@@ -271,6 +275,20 @@ export default function ListPage() {
 
     document.addEventListener("mousemove", handleMouseMove)
     document.addEventListener("mouseup", handleMouseUp)
+  }
+
+  const handleDeleteItem = (listItem: ListItem, item: Item) => {
+    setItemToDelete({ listItem, item })
+    setShowDeleteConfirm(true)
+    setSwipedItemId(null) // Fechar swipe se estiver aberto
+  }
+
+  const handleConfirmDelete = async () => {
+    if (itemToDelete) {
+      await removeItemFromList(itemToDelete.listItem.id)
+      setShowDeleteConfirm(false)
+      setItemToDelete(null)
+    }
   }
 
   if (!list) {
@@ -680,8 +698,7 @@ export default function ListPage() {
                               size="sm"
                               className="text-white hover:bg-red-700 border-0 p-2"
                               onClick={() => {
-                                removeItemFromList(listItem.id)
-                                setSwipedItemId(null)
+                                handleDeleteItem(listItem, item)
                               }}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -798,7 +815,7 @@ export default function ListPage() {
                                   className="text-gray-400 hover:text-red-400 hover:bg-red-900/20 border-0 p-2"
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    removeItemFromList(listItem.id)
+                                    handleDeleteItem(listItem, item)
                                   }}
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -872,6 +889,51 @@ export default function ListPage() {
           </div>
         </div>
       </AnimatedDialog>
+
+      {/* Dialog de confirmação de exclusão */}
+      <AnimatedDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Confirmar Exclusão"
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4">
+          {itemToDelete && (
+            <>
+              <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Trash2 className="w-5 h-5 text-red-400" />
+                  <span className="font-medium text-red-300">Remover item da lista</span>
+                </div>
+                <p className="text-sm text-gray-300">
+                  Deseja remover <strong>&quot;{itemToDelete.item.name}&quot;</strong> desta lista?
+                </p>
+                <p className="text-xs text-gray-400 mt-2">
+                  Quantidade: {itemToDelete.listItem.quantity} {itemToDelete.item.unit} • 
+                  Valor: R$ {(itemToDelete.listItem.price * itemToDelete.listItem.quantity).toFixed(2)}
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <Button 
+                  onClick={handleConfirmDelete} 
+                  className="flex-1 bg-red-600 hover:bg-red-700 border-0"
+                >
+                  Sim, Remover
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 bg-gray-900 border-gray-700 text-white hover:bg-gray-800"
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </AnimatedDialog>
+
     </div>
   )
 }
