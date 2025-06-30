@@ -12,11 +12,12 @@ import ItemManager from "./components/ItemManager"
 import CommandBar from "./components/CommandBar"
 import AnimatedDialog from "./components/AnimatedDialog"
 import { AnimatedList } from "./components/AnimatedCard"
-import PWAInstallPrompt from "@/components/PWAInstallPrompt"
+import PWAInstallPrompt from "@/app/components/PWAInstallPrompt"
 import AuthGuard from "./components/AuthGuard"
 import { useAuth } from "@/app/hooks/useAuthCustom"
 import { useAppStore } from "./store/useAppStoreDB"
 import { Item, ShoppingList } from "./types"
+// import RealtimeDebugger from "./components/RealtimeDebugger"
 
 // import { createClient } from '@/utils/supabase/client'
 

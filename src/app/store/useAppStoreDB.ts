@@ -352,6 +352,36 @@ export const useAppStore = create<AppState>((set, get) => ({
   addItemToList: async (listId, itemId, quantity, price) => {
     try {
       set({ loading: true, error: null })
+      console.log('🔄 addItemToList chamado:', { listId, itemId, quantity, price })
+
+      // Verificar se o item já existe na lista
+      const existingListItem = get().listItems.find(
+        (listItem) => listItem.listId === listId && listItem.itemId === itemId
+      )
+
+      if (existingListItem) {
+        console.log('📝 Item já existe na lista, atualizando quantidade...')
+        // Se já existe, atualizar a quantidade
+        const newQuantity = existingListItem.quantity + quantity
+        await get().updateListItem(existingListItem.id, { 
+          quantity: newQuantity,
+          price: price // Atualizar o preço também
+        })
+        return
+      }
+
+      // Verificar se o itemId realmente existe na tabela item
+      const { data: itemExists, error: itemError } = await supabase
+        .from('item')
+        .select('id')
+        .eq('id', itemId)
+        .single()
+
+      if (itemError || !itemExists) {
+        throw new Error(`Item com ID ${itemId} não existe na tabela item`)
+      }
+
+      console.log('✅ Item validado, inserindo na lista...')
 
       const newListItem = {
         id: crypto.randomUUID(),
@@ -369,7 +399,12 @@ export const useAppStore = create<AppState>((set, get) => ({
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Erro ao inserir na tabela list_item:', error)
+        throw error
+      }
+
+      console.log('✅ Item adicionado com sucesso:', data)
 
       const listItemWithDate: ListItem = {
         id: data.id,
@@ -387,8 +422,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         loading: false 
       }))
     } catch (error: unknown) {
+      console.error('❌ Erro em addItemToList:', error)
       set({ error: (error as Error).message, loading: false })
-      console.error('Erro ao adicionar item à lista:', error)
     }
   },
 
@@ -419,11 +454,61 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const state = get()
       const listItem = state.listItems.find(item => item.id === listItemId)
-      if (!listItem) return
+      if (!listItem) {
+        console.error('❌ Item não encontrado no estado local:', listItemId)
+        return
+      }
 
-      await get().updateListItem(listItemId, { completed: !listItem.completed })
-    } catch (error) {
-      console.error('Erro ao alternar item:', error)
+      const newCompletedValue = !listItem.completed
+      console.log('🔄 Iniciando toggle:', {
+        id: listItemId,
+        currentCompleted: listItem.completed,
+        newCompleted: newCompletedValue,
+        timestamp: new Date().toISOString()
+      })
+
+      set({ loading: true, error: null })
+
+      // Fazer update direto no banco de dados
+      console.log('📤 Enviando update para Supabase...')
+      const { data, error } = await supabase
+        .from('list_item')
+        .update({ completed: newCompletedValue })
+        .eq('id', listItemId)
+        .select()
+
+      if (error) {
+        console.error('❌ Erro do Supabase:', error)
+        throw error
+      }
+
+      console.log('✅ Update no banco realizado:', data)
+
+      // Atualizar estado local imediatamente (otimistic update)
+      set((state) => {
+        const newListItems = state.listItems.map((item) => 
+          item.id === listItemId ? { ...item, completed: newCompletedValue } : item
+        )
+        
+        console.log('📱 Estado local atualizado otimisticamente')
+        return { listItems: newListItems, loading: false }
+      })
+
+      // Aguardar um pouco para ver se o realtime chega
+      setTimeout(() => {
+        const currentState = get()
+        const updatedItem = currentState.listItems.find(item => item.id === listItemId)
+        console.log('🕐 Estado após 2s:', {
+          itemFound: !!updatedItem,
+          completed: updatedItem?.completed,
+          expectedCompleted: newCompletedValue
+        })
+      }, 2000)
+
+    } catch (error: unknown) {
+      const errorMessage = (error as Error).message
+      set({ error: errorMessage, loading: false })
+      console.error('❌ Erro ao alternar item:', error)
     }
   },
 
@@ -758,14 +843,17 @@ export const useAppStore = create<AppState>((set, get) => ({
   subscribeToRealtime: () => {
     const { subscriptions } = get()
     
+    console.log('🔄 Iniciando subscriptions de realtime...')
+    
     // Unsubscribe from existing subscriptions
     subscriptions.forEach((subscription: RealtimeChannel) => {
+      console.log('🗑️ Removendo subscription anterior:', subscription.topic)
       void supabase.removeChannel(subscription)
     })
 
-    // Create a single channel for all table changes
-    const channel = supabase
-      .channel('database-changes')
+    // Create separate channels for better debugging
+    const itemChannel = supabase
+      .channel('items-changes')
       .on(
         'postgres_changes',
         {
@@ -774,7 +862,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           table: 'item'
         },
         (payload: RealtimePostgresChangesPayload<DatabaseItem>) => {
-          console.log('Item change:', payload)
+          console.log('📦 Item change:', payload.eventType, (payload.new as DatabaseItem)?.name || (payload.old as DatabaseItem)?.name)
           
           if (payload.eventType === 'INSERT' && payload.new) {
             const newItem = {
@@ -802,6 +890,12 @@ export const useAppStore = create<AppState>((set, get) => ({
           }
         }
       )
+      .subscribe((status) => {
+        console.log('📦 Items channel status:', status)
+      })
+
+    const listChannel = supabase
+      .channel('lists-changes')
       .on(
         'postgres_changes',
         {
@@ -810,7 +904,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           table: 'shopping_list'
         },
         (payload: RealtimePostgresChangesPayload<DatabaseList>) => {
-          console.log('List change:', payload)
+          console.log('📋 List change:', payload.eventType, (payload.new as DatabaseList)?.name || (payload.old as DatabaseList)?.name)
           
           if (payload.eventType === 'INSERT' && payload.new) {
             const newList = {
@@ -838,6 +932,12 @@ export const useAppStore = create<AppState>((set, get) => ({
           }
         }
       )
+      .subscribe((status) => {
+        console.log('📋 Lists channel status:', status)
+      })
+
+    const listItemChannel = supabase
+      .channel('list-items-changes')
       .on(
         'postgres_changes',
         {
@@ -846,7 +946,12 @@ export const useAppStore = create<AppState>((set, get) => ({
           table: 'list_item'
         },
         (payload: RealtimePostgresChangesPayload<DatabaseListItem>) => {
-          console.log('List item change:', payload)
+          console.log('🛒 List item change:', {
+            event: payload.eventType,
+            id: (payload.new as DatabaseListItem)?.id || (payload.old as DatabaseListItem)?.id,
+            completed: (payload.new as DatabaseListItem)?.completed,
+            timestamp: new Date().toISOString()
+          })
           
           if (payload.eventType === 'INSERT' && payload.new) {
             const newListItem: ListItem = {
@@ -859,37 +964,56 @@ export const useAppStore = create<AppState>((set, get) => ({
               createdAt: new Date(payload.new.createdAt),
               unit: ''
             }
+            
+            console.log('➕ Inserindo list item:', newListItem.id, 'completed:', newListItem.completed)
+            
             set((state) => ({
               listItems: [newListItem, ...state.listItems.filter(item => item.id !== newListItem.id)]
             }))
           } else if (payload.eventType === 'UPDATE' && payload.new) {
-            const updatedListItem: Partial<ListItem> = {
+            const updatedListItem: ListItem = {
               id: payload.new.id,
               listId: payload.new.listId,
               itemId: payload.new.itemId,
               quantity: payload.new.quantity,
               price: payload.new.price,
               completed: payload.new.completed,
-              createdAt: new Date(payload.new.createdAt)
+              createdAt: new Date(payload.new.createdAt),
+              unit: ''
             }
-            set((state) => ({
-              listItems: state.listItems.map((listItem) =>
-                listItem.id === payload.new?.id ? { ...listItem, ...updatedListItem } : listItem
+            
+            console.log('🔄 Atualizando list item:', updatedListItem.id, 'completed:', updatedListItem.completed)
+            
+            set((state) => {
+              const newListItems = state.listItems.map((listItem) =>
+                listItem.id === payload.new?.id ? updatedListItem : listItem
               )
-            }))
+              
+              console.log('📱 Estado local atualizado para item:', updatedListItem.id)
+              return { listItems: newListItems }
+            })
           } else if (payload.eventType === 'DELETE' && payload.old) {
+            console.log('🗑️ Removendo list item:', payload.old.id)
+            
             set((state) => ({
               listItems: state.listItems.filter((listItem) => listItem.id !== payload.old?.id)
             }))
           }
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('🛒 ListItems channel status:', status)
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Canal de list_item conectado com sucesso!')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Erro no canal de list_item')
+        }
+      })
 
-    // Store the subscription
-    set({ subscriptions: [channel] })
+    // Store all subscriptions
+    set({ subscriptions: [itemChannel, listChannel, listItemChannel] })
 
-    console.log('Realtime subscriptions ativadas!')
+    console.log('✅ Realtime subscriptions ativadas com 3 canais separados!')
   },
 
   unsubscribeFromRealtime: () => {

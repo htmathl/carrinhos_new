@@ -3,16 +3,6 @@
 export default function Loading() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
-      {/* Header minimalista */}
-      <div className="sticky top-0 z-50 bg-black/95 backdrop-blur-sm border-b border-gray-800">
-        <div className="flex items-center gap-4 p-4">
-          <div className="w-8 h-8 bg-gray-800 rounded-lg animate-pulse"></div>
-          <div className="flex-1 space-y-2">
-            <div className="h-5 bg-gray-800 rounded w-32 animate-pulse"></div>
-            <div className="h-3 bg-gray-700 rounded w-20 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-          </div>
-        </div>
-      </div>
 
       {/* Stats simples */}
       <div className="p-4 border-b border-gray-800">
@@ -55,11 +45,6 @@ export default function Loading() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* FAB skeleton minimalista */}
-      <div className="fixed bottom-6 right-6">
-        <div className="w-14 h-14 bg-purple-600 rounded-full animate-pulse shadow-lg opacity-50"></div>
       </div>
     </div>
   )
