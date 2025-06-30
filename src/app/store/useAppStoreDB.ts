@@ -83,6 +83,12 @@ interface AppState {
 
 const supabase = createClient()
 
+// Função utilitária para capitalizar primeira letra
+const capitalizeFirstLetter = (str: string) => {
+  if (!str) return str
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   items: [],
   lists: [],
@@ -123,10 +129,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       set({ loading: true, error: null })
 
+      // Capitalizar primeira letra do nome e categoria
+      const capitalizedName = capitalizeFirstLetter(name.trim())
+      const capitalizedCategory = capitalizeFirstLetter(category.trim())
+
       const newItem = {
         id: crypto.randomUUID(),
-        name,
-        category,
+        name: capitalizedName,
+        category: capitalizedCategory,
         unit,
         createdAt: new Date().toISOString()
       }
@@ -161,16 +171,25 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       set({ loading: true, error: null })
 
+      // Capitalizar primeira letra se nome ou categoria estão sendo atualizados
+      const processedUpdates = { ...updates }
+      if (updates.name) {
+        processedUpdates.name = capitalizeFirstLetter(updates.name.trim())
+      }
+      if (updates.category) {
+        processedUpdates.category = capitalizeFirstLetter(updates.category.trim())
+      }
+
       const { error } = await supabase
         .from('item')
-        .update(updates)
+        .update(processedUpdates)
         .eq('id', id)
 
       if (error) throw error
 
       set((state) => ({
         items: state.items.map((item) => 
-          item.id === id ? { ...item, ...updates } : item
+          item.id === id ? { ...item, ...processedUpdates } : item
         ),
         loading: false
       }))
@@ -729,27 +748,31 @@ export const useAppStore = create<AppState>((set, get) => ({
         const category = createItemMatch[2]?.trim() || "Geral"
         const unit = (createItemMatch[3] as "kg" | "litro" | "unidade") || "unidade"
 
-        const existingItem = items.find((item) => item.name.toLowerCase() === itemName.toLowerCase())
+        // Capitalizar antes de verificar se já existe
+        const capitalizedItemName = capitalizeFirstLetter(itemName)
+        const capitalizedCategory = capitalizeFirstLetter(category)
+
+        const existingItem = items.find((item) => item.name.toLowerCase() === capitalizedItemName.toLowerCase())
 
         if (existingItem) {
           return {
             success: false,
-            message: `Item "${itemName}" já existe!`,
+            message: `Item "${capitalizedItemName}" já existe!`,
             type: "error",
           }
         }
 
-        const newItem = await addItem(itemName, category, unit)
+        const newItem = await addItem(capitalizedItemName, capitalizedCategory, unit)
         if (newItem) {
           return {
             success: true,
-            message: `Item "${itemName}" criado na categoria "${category}" (${unit}) ✨`,
+            message: `Item "${capitalizedItemName}" criado na categoria "${capitalizedCategory}" (${unit}) ✨`,
             type: "success",
           }
         } else {
           return {
             success: false,
-            message: `Erro ao criar item "${itemName}"`,
+            message: `Erro ao criar item "${capitalizedItemName}"`,
             type: "error",
           }
         }

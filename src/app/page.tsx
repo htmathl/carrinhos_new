@@ -21,6 +21,12 @@ import { Item, ShoppingList } from "./types"
 
 // import { createClient } from '@/utils/supabase/client'
 
+// Função utilitária para capitalizar primeira letra
+const capitalizeFirstLetter = (str: string) => {
+  if (!str) return str
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+}
+
 export default function Home() {
   // const supabase = createClient()
   const { signOut } = useAuth()
@@ -72,7 +78,9 @@ export default function Home() {
 
   const handleCreateList = async () => {
     if (newListName.trim()) {
-      await addList(newListName.trim(), newListDescription.trim())
+      // Capitalizar primeira letra do nome da lista também
+      const capitalizedListName = capitalizeFirstLetter(newListName.trim())
+      await addList(capitalizedListName, newListDescription.trim())
       setNewListName("")
       setNewListDescription("")
       setShowNewList(false)
@@ -90,8 +98,8 @@ export default function Home() {
   const handleUpdateItem = async () => {
     if (editingItem && editItemName.trim() && editItemCategory.trim()) {
       await updateItem(editingItem.id, {
-        name: editItemName.trim(),
-        category: editItemCategory.trim(),
+        name: capitalizeFirstLetter(editItemName.trim()),
+        category: capitalizeFirstLetter(editItemCategory.trim()),
         unit: editItemUnit,
       })
       setShowEditItem(false)
@@ -109,7 +117,7 @@ export default function Home() {
   const handleUpdateList = async () => {
     if (editingList && editListName.trim()) {
       await updateList(editingList.id, {
-        name: editListName.trim(),
+        name: capitalizeFirstLetter(editListName.trim()),
         description: editListDescription.trim(),
       })
       setShowEditList(false)
