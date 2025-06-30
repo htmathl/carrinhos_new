@@ -165,6 +165,7 @@ export default function ListPage() {
     if (selectedItemId && quantity && price) {
       try {
         console.log('🔄 Adicionando item à lista:', { listId, selectedItemId, quantity, price })
+        // Permitir números decimais para quantidade
         await addItemToList(listId, selectedItemId, Number.parseFloat(quantity), Number.parseFloat(price))
         
         // Reset form only on success
@@ -190,7 +191,7 @@ export default function ListPage() {
       const createdItem = await addItem(newItemName.trim(), newItemCategory.trim(), newItemUnit)
 
       if (createdItem) {
-        // Adicionar imediatamente à lista usando o item retornado
+        // Adicionar imediatamente à lista usando o item retornado (quantidade pode ser decimal)
         await addItemToList(listId, createdItem.id, Number.parseFloat(quantity), Number.parseFloat(price))
 
         // Reset form
@@ -787,7 +788,8 @@ export default function ListPage() {
                               {/* Quantity and Unit Price */}
                               <div className="flex items-center justify-between text-sm">
                                 <span className="text-gray-400">
-                                  {listItem.quantity} {item.unit}
+                                  {/* Mostrar até 3 casas decimais, mas remover zeros desnecessários */}
+                                  {listItem.quantity % 1 === 0 ? listItem.quantity.toString() : listItem.quantity.toFixed(3).replace(/\.?0+$/, '')} {item.unit}
                                 </span>
                                 <span className="text-gray-400">
                                   R$ {listItem.price.toFixed(2)} / {item.unit}
@@ -909,7 +911,7 @@ export default function ListPage() {
                   Deseja remover <strong>&quot;{itemToDelete.item.name}&quot;</strong> desta lista?
                 </p>
                 <p className="text-xs text-gray-400 mt-2">
-                  Quantidade: {itemToDelete.listItem.quantity} {itemToDelete.item.unit} • 
+                  Quantidade: {itemToDelete.listItem.quantity % 1 === 0 ? itemToDelete.listItem.quantity.toString() : itemToDelete.listItem.quantity.toFixed(3).replace(/\.?0+$/, '')} {itemToDelete.item.unit} • 
                   Valor: R$ {(itemToDelete.listItem.price * itemToDelete.listItem.quantity).toFixed(2)}
                 </p>
               </div>

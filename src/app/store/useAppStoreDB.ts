@@ -380,8 +380,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       if (existingListItem) {
         console.log('📝 Item já existe na lista, atualizando quantidade...')
-        // Se já existe, atualizar a quantidade
-        const newQuantity = existingListItem.quantity + quantity
+        // Se já existe, atualizar a quantidade (agora pode ser decimal)
+        const newQuantity = Number((existingListItem.quantity + quantity).toFixed(3)) // Limitar a 3 casas decimais
         await get().updateListItem(existingListItem.id, { 
           quantity: newQuantity,
           price: price // Atualizar o preço também
@@ -406,7 +406,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         id: crypto.randomUUID(),
         listId: listId,
         itemId: itemId,
-        quantity,
+        quantity: Number(quantity.toFixed(3)), // Limitar a 3 casas decimais
         price,
         completed: false,
         createdAt: new Date().toISOString()
