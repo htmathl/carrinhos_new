@@ -19,7 +19,7 @@ interface ListCardProps {
 }
 
 export default function ListCard({ list }: ListCardProps) {
-  const { deleteList, getListItems, updateList, items } = useAppStore()
+  const { deleteList, getListItems, updateList, items, addList, addItemToList } = useAppStore()
   const [isDeleting, setIsDeleting] = useState(false)
 
   // Adicionar estados para edição:
@@ -64,6 +64,37 @@ export default function ListCard({ list }: ListCardProps) {
     }
   }
 
+  const handleDuplicateList = async () => {
+    try {
+      // Criar nova lista
+      const newListName = `Cópia de ${list.name}`
+      await addList(newListName, list.description || "")
+
+      // Aguardar um pouco para garantir que a lista foi criada
+      setTimeout(async () => {
+        // Buscar a lista recém-criada
+        const currentState = useAppStore.getState()
+        const newList = currentState.lists.find(l => l.name === newListName)
+
+        if (newList) {
+          // Duplicar todos os itens da lista original
+          const originalItems = getListItems(list.id)
+
+          for (const originalItem of originalItems) {
+            await addItemToList(
+              newList.id,
+              originalItem.itemId,
+              originalItem.quantity,
+              originalItem.price
+            )
+          }
+        }
+      }, 500)
+    } catch (error) {
+      console.error('Erro ao duplicar lista:', error)
+    }
+  }
+
   const dropdownItems = [
     {
       label: "Editar",
@@ -77,11 +108,17 @@ export default function ListCard({ list }: ListCardProps) {
       onClick: handleDeleteClick,
       className: "text-red-400 hover:bg-red-900/20",
     },
+    {
+      label: "Duplicar",
+      icon: <ShoppingBag className="w-4 h-4" />,
+      onClick: handleDuplicateList,
+      className: "text-blue-400 hover:bg-blue-900/20",
+    }
   ]
 
   return (
     <>
-      <AnimatedCard 
+      <AnimatedCard
         isVisible={!isDeleting}
         className="w-full"
       >
